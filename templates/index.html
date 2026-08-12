@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>月相羅針 計算PoC v0.6｜入力UI・現在値改善</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='0.6') }}">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="hero">
+      <p class="eyebrow">春華プロジェクト｜技術検証</p>
+      <h1>月相羅針 計算PoC v0.6</h1>
+      <p class="lead">出生情報から太陽・月の黄経と角度差を計算し、技術確認用の標準月相8分類へ受け渡します。出生時間が不明な場合は、出生日全体から候補を確認します。</p>
+    </header>
+
+    <section class="notice" aria-label="重要なお知らせ">
+      <strong>重要：</strong>
+      この画面のP01〜P08・標準月相名称・説明文章、および出生時間不明時の候補判定方式は、春華独自の「月相羅針」の正式仕様ではありません。
+      360°を45°ずつ8等分したPoC技術検証用の暫定仕様です。
+    </section>
+
+    <section class="card">
+      <h2>出生情報を入力</h2>
+
+      {% if errors %}
+      <div class="error-box" role="alert">
+        <strong>入力または計算内容を確認してください。</strong>
+        <ul>
+          {% for error in errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <form method="post" class="birth-form" autocomplete="off" novalidate>
+        <div class="form-grid">
+          <label>
+            <span>生年月日</span>
+            <input type="date" name="birth_date" data-current-value="{{ form.birth_date }}" autocomplete="off" required>
+          </label>
+
+          <label>
+            <span>出生時間</span>
+            <input type="time" name="birth_time" data-current-value="{{ form.birth_time }}" autocomplete="off">
+            <small>出生時間が分からない場合は、空欄のままで構いません。</small>
+          </label>
+
+          <label class="full-width">
+            <span>出生地</span>
+            <input
+              type="text"
+              name="birth_place"
+              data-current-value="{{ form.birth_place }}"
+              placeholder="例：兵庫県小野市"
+              autocomplete="off"
+              required
+            >
+            <small>PoC v0.6では日本国内として Asia/Tokyo を使用します。</small>
+          </label>
+        </div>
+
+        <button type="submit">計算する</button>
+      </form>
+    </section>
+
+    {% if result %}
+      {% if result.birth_time_known %}
+      <section class="card result-card" aria-live="polite">
+        <div class="result-heading">
+          <div>
+            <p class="eyebrow">あなたの月相</p>
+            <h2>{{ result.phase_id }}｜{{ result.phase_name }}</h2>
+            <p>{{ result.phase_english_name }}</p>
+          </div>
+          <span class="provisional-badge">PoC標準月相</span>
+        </div>
+
+        <dl class="result-list">
+          <div><dt>出生データ</dt><dd>{{ result.birth_data }}</dd></div>
+          <div><dt>タイムゾーン</dt><dd>{{ result.timezone }}</dd></div>
+          <div><dt>UTC日時</dt><dd>{{ result.utc_datetime }}</dd></div>
+          <div><dt>ユリウス日</dt><dd>{{ "%.8f"|format(result.julian_day) }}</dd></div>
+          <div><dt>太陽黄経</dt><dd>{{ "%.8f"|format(result.sun_longitude) }}°</dd></div>
+          <div><dt>月黄経</dt><dd>{{ "%.8f"|format(result.moon_longitude) }}°</dd></div>
+          <div><dt>太陽と月の角度差</dt><dd>{{ "%.8f"|format(result.angle_difference) }}°</dd></div>
+          <div><dt>PoC分類ID</dt><dd>{{ result.phase_id }}</dd></div>
+          <div><dt>標準月相名称</dt><dd>{{ result.phase_name }}（{{ result.phase_english_name }}）</dd></div>
+          <div><dt>分類角度範囲</dt><dd>{{ result.phase_range }}</dd></div>
+        </dl>
+
+        <div class="phase-description">
+          <h3>月相の説明（PoC用）</h3>
+          <p>{{ result.phase_description }}</p>
+          <p><strong>注意：</strong>{{ result.phase_note }}</p>
+        </div>
+
+        <p class="calculation-note">
+          計算は地心・トロピカル黄経を使用。計算エンジン：{{ result.ephemeris_mode }}。
+        </p>
+      </section>
+      {% else %}
+      <section class="card result-card" aria-live="polite">
+        <div class="result-heading">
+          <div>
+            <p class="eyebrow">出生時間不明</p>
+            {% if result.classification_status == "stable" %}
+            <h2>一日を通して同じ月相区分でした</h2>
+            <p>出生日全体を確認した結果、候補は1つです。</p>
+            {% else %}
+            <h2>出生時刻によって月相区分が変わる可能性があります</h2>
+            <p>1つに確定せず、出生日内で確認できた候補を表示します。</p>
+            {% endif %}
+          </div>
+          <span class="provisional-badge">PoC暫定判定</span>
+        </div>
+
+        <div class="candidate-list">
+          {% for phase in result.possible_phases %}
+          <article class="candidate-card">
+            <p class="candidate-label">候補{% if result.possible_phases|length > 1 %}{{ loop.index }}{% endif %}</p>
+            <h3>{{ phase.id }}｜{{ phase.name }}</h3>
+            <p class="candidate-english">{{ phase.englishName }}</p>
+            <p>{{ phase.description }}</p>
+            <p class="candidate-range">技術検証用区分：{{ phase.rangeText }}</p>
+          </article>
+          {% endfor %}
+        </div>
+
+        {% if result.classification_status == "ambiguous" %}
+        <div class="guidance-box">
+          正確な出生時間が分かる場合は、出生時間を再入力すると1つの区分として計算できます。
+        </div>
+        {% endif %}
+
+        <dl class="result-list compact-result-list">
+          <div><dt>出生日・出生地</dt><dd>{{ result.birth_date }} {{ result.birth_place }}</dd></div>
+          <div><dt>タイムゾーン</dt><dd>{{ result.timezone }}</dd></div>
+          <div><dt>確認時刻範囲</dt><dd>{{ result.check_period }}</dd></div>
+          <div><dt>日内確認方法</dt><dd>{{ result.sample_interval_minutes }}分刻み＋23:59:59を確認（45°区分の通過をサンプル間でも追跡）</dd></div>
+          <div><dt>確認点数</dt><dd>{{ result.sample_count }}点</dd></div>
+          <div><dt>角度差（00:00）</dt><dd>{{ "%.8f"|format(result.start_angle_difference) }}°</dd></div>
+          <div><dt>角度差（23:59:59）</dt><dd>{{ "%.8f"|format(result.end_angle_difference) }}°</dd></div>
+        </dl>
+
+        <div class="phase-description warning-description">
+          <h3>出生時間不明時の扱いについて</h3>
+          <p>{{ result.unknown_time_note }}</p>
+          <p><strong>注意：</strong>仮の正午などを出生時刻として設定し、1区分に確定する処理は行っていません。</p>
+        </div>
+
+        <p class="calculation-note">
+          計算は地心・トロピカル黄経を使用。計算エンジン：{{ result.ephemeris_mode }}。
+        </p>
+      </section>
+      {% endif %}
+    {% endif %}
+
+    <footer>
+      <p>月相羅針 計算PoC v0.6｜正式占術仕様を確定するものではありません。</p>
+    </footer>
+  </main>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector(".birth-form");
+      if (!form) return;
+
+      const fields = form.querySelectorAll("[data-current-value]");
+
+      // POST後は直前の入力内容を画面へ戻すが、HTML上の初期値は空欄のままにする。
+      // これにより、iPad/Safari等の入力UIで「リセット」を選んだ場合、
+      // 前回計算値ではなく未入力状態へ戻せる。
+      fields.forEach((field) => {
+        const currentValue = field.dataset.currentValue || "";
+        if (currentValue) {
+          field.value = currentValue;
+        }
+      });
+
+      // 生年月日・出生時間が空欄の状態でネイティブ入力画面を開く場合は、
+      // その時点の端末ローカル日時を入力画面の現在値として使う。
+      // これにより、利用者が値を動かさず「✓」で確定しても、現在年月日／現在時刻が採用される。
+      // 既に値が入っている場合は、その値を維持して上書きしない。
+      const pad2 = (value) => String(value).padStart(2, "0");
+
+      const setCurrentValueIfEmpty = (field) => {
+        if (field.value) return;
+
+        const now = new Date();
+        if (field.type === "date") {
+          field.value = [
+            now.getFullYear(),
+            pad2(now.getMonth() + 1),
+            pad2(now.getDate()),
+          ].join("-");
+        } else if (field.type === "time") {
+          field.value = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+        }
+      };
+
+      form.querySelectorAll('input[type="date"], input[type="time"]').forEach((field) => {
+        // pointerdown は iPad/Safari で入力画面が開く直前に値を用意するため。
+        // focus はキーボード操作等のフォールバック。
+        field.addEventListener("pointerdown", () => setCurrentValueIfEmpty(field));
+        field.addEventListener("focus", () => setCurrentValueIfEmpty(field));
+      });
+
+      // v0.5からの仕様を維持：フォームのリセット時は、前回計算値へ戻さず未入力にする。
+      // iPad/Safari の日付・時刻入力画面にある「リセット」で値が消された場合も、
+      // その空欄状態をそのまま維持する。
+      form.addEventListener("reset", () => {
+        window.requestAnimationFrame(() => {
+          fields.forEach((field) => {
+            field.value = "";
+          });
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>
