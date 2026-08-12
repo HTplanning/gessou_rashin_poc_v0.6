@@ -1,0 +1,250 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+  color: #202733;
+  background: #f5f3ef;
+  line-height: 1.65;
+  --form-control-height: 48px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f7f5f1 0%, #efede7 100%);
+}
+
+.page-shell {
+  width: min(920px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 56px;
+}
+
+.hero { margin-bottom: 24px; }
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #6d5b45;
+}
+
+h1, h2 { line-height: 1.3; }
+h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.6rem); }
+h2 { margin: 0 0 18px; font-size: 1.25rem; }
+.lead { margin: 12px 0 0; color: #58606b; }
+
+.notice,
+.card {
+  border: 1px solid #ded9d0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 34px rgba(43, 38, 32, 0.06);
+}
+
+.notice {
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  background: #fff7e8;
+  border-color: #ead5aa;
+}
+
+.card {
+  padding: clamp(20px, 4vw, 32px);
+  margin-bottom: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+label { display: grid; gap: 7px; font-weight: 700; align-content: start; align-self: start; }
+.full-width { grid-column: 1 / -1; }
+small { font-weight: 400; color: #6c737d; }
+
+input {
+  width: 100%;
+  min-height: var(--form-control-height);
+  height: var(--form-control-height);
+  max-height: var(--form-control-height);
+  border: 1px solid #c9c4bb;
+  border-radius: 10px;
+  background: white;
+  padding: 0 12px;
+  font: inherit;
+  line-height: normal;
+  font-weight: 400;
+  color: inherit;
+}
+
+/*
+ * iPad/Safari では date/time のネイティブ表示が text より高くなる場合がある。
+ * block-size と内部 date/time 編集領域の高さを固定し、出生地と同じ高さにそろえる。
+ * appearance は変更しないため、Safari のネイティブ日付・時刻入力画面は維持する。
+ */
+input[type="date"],
+input[type="time"],
+input[type="text"] {
+  display: block;
+  block-size: var(--form-control-height);
+  min-block-size: var(--form-control-height);
+  max-block-size: var(--form-control-height);
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  min-height: 0;
+  height: auto;
+  line-height: normal;
+  text-align: left;
+}
+
+input:focus {
+  outline: 3px solid rgba(91, 75, 55, 0.14);
+  border-color: #6d5b45;
+}
+
+button {
+  margin-top: 22px;
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 10px;
+  background: #273549;
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover { filter: brightness(1.08); }
+
+.error-box {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #dca9a9;
+  background: #fff1f1;
+  color: #6f2626;
+}
+
+.error-box ul { margin: 8px 0 0; padding-left: 22px; }
+
+.result-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.provisional-badge {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #fff0cf;
+  color: #76591b;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.result-list { margin: 0; }
+.result-list > div {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 1.4fr);
+  gap: 18px;
+  padding: 12px 0;
+  border-top: 1px solid #ece8e1;
+}
+
+.result-list dt { font-weight: 700; color: #555d68; }
+.result-list dd { margin: 0; word-break: break-word; }
+
+.calculation-note {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #ece8e1;
+  font-size: 0.9rem;
+  color: #6c737d;
+}
+
+footer {
+  margin-top: 28px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #7c7f83;
+}
+
+@media (max-width: 640px) {
+  .page-shell { width: min(100% - 20px, 920px); padding-top: 24px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .full-width { grid-column: auto; }
+  .result-list > div { grid-template-columns: 1fr; gap: 2px; }
+  .result-heading { align-items: center; }
+}
+
+.phase-description {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 0.75rem;
+  background: #fafafa;
+}
+.phase-description h3 {
+  margin-top: 0;
+}
+
+.candidate-list {
+  display: grid;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.candidate-card {
+  border: 1px solid #ded9d0;
+  border-radius: 12px;
+  padding: 18px;
+  background: #fffdf9;
+}
+
+.candidate-card h3 {
+  margin: 2px 0 4px;
+  font-size: 1.15rem;
+}
+
+.candidate-label,
+.candidate-english,
+.candidate-range {
+  margin: 0;
+  color: #6c737d;
+}
+
+.candidate-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.candidate-range {
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.guidance-box {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #eef3f8;
+  border: 1px solid #cbd8e5;
+}
+
+.compact-result-list {
+  margin-top: 20px;
+}
+
+.warning-description {
+  background: #fffaf0;
+  border-color: #ead5aa;
+}
